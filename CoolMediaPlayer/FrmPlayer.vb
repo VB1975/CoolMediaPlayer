@@ -1,4 +1,5 @@
-﻿Imports AxWMPLib
+﻿Imports System.IO
+Imports AxWMPLib
 
 Public Class FrmPlayer
 
@@ -64,29 +65,46 @@ Public Class FrmPlayer
     Private Sub PicOpen_Click(sender As Object, e As EventArgs) Handles PicOpen.Click
 
         Dim ofdVideo As New OpenFileDialog
-        If ofdVideo.ShowDialog <> DialogResult.Cancel Then
-            myVideo = ofdVideo.FileName
-            WmpPlayer.URL = myVideo
-            WmpPlayer.Ctlcontrols.stop()
-            If myVideo <> "" Then
-                LblFilename.Text = ofdVideo.SafeFileName
-                LblFilename.ForeColor = forecolorWithFilename
-                PicPlayPause.Image = bitmapPlayOn
-            Else
-                LblFilename.Text = "No File Selected"
-                LblFilename.ForeColor = forecolorNoFilename
-                PicPlayPause.Image = bitmapPlayOff
+        Using ofdVideo
+            ofdVideo.InitialDirectory = Environment.SpecialFolder.MyVideos
+            ofdVideo.Title = "Select a video file to play"
+            ofdVideo.Filter = "Video Files|*.mp4"
+            ofdVideo.CheckFileExists = False
+            If ofdVideo.ShowDialog <> DialogResult.Cancel Then
+                If Not File.Exists(ofdVideo.FileName) Then
+                    MessageBox.Show("The video you attempted to play could not be found." & Environment.NewLine &
+                                    "Please make sure the file exists and try again." & Environment.NewLine & Environment.NewLine &
+                                    "Any existing video has been removed from the player and must be reselected.",
+                                    "Video Not Found", MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
+                    myVideo = ""
+                Else
+                    myVideo = ofdVideo.FileName
+                    WmpPlayer.URL = myVideo
+                    WmpPlayer.Ctlcontrols.stop()
+                End If
+                If myVideo <> "" Then
+                    LblFilename.Text = ofdVideo.SafeFileName
+                    LblFilename.ForeColor = forecolorWithFilename
+                    PicPlayPause.Image = bitmapPlayOn
+                Else
+                    LblFilename.Text = "No File Selected"
+                    LblFilename.ForeColor = forecolorNoFilename
+                    PicPlayPause.Image = bitmapPlayOff
+                End If
             End If
-        End If
+            ofdVideo.Dispose()
+        End Using
 
     End Sub
 
     Private Sub PicPlayPause_Click(sender As Object, e As EventArgs) Handles PicPlayPause.Click
 
-        If WmpPlayer.playState = WMPLib.WMPPlayState.wmppsPlaying Then
-            WmpPlayer.Ctlcontrols.pause()
-        Else
-            WmpPlayer.Ctlcontrols.play()
+        If myVideo <> "" Then
+            If WmpPlayer.playState = WMPLib.WMPPlayState.wmppsPlaying Then
+                WmpPlayer.Ctlcontrols.pause()
+            Else
+                WmpPlayer.Ctlcontrols.play()
+            End If
         End If
 
     End Sub
